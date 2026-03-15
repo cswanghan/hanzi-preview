@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { getHanziDetail, isValidChineseChar, type HanziDetail } from "@/data/hanziData"
 
 // Hanzi Writer 类型声明
@@ -32,6 +32,16 @@ export default function Home() {
   const [isComposing, setIsComposing] = useState(false)
   const writerRef = useRef<HanziWriterInstance | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // 获取屏幕宽度来动态设置画布大小
+  const getCanvasSize = useCallback(() => {
+    if (typeof window === 'undefined') return 240
+    const width = window.innerWidth
+    // 移动端使用更小的画布
+    if (width < 480) return Math.min(width - 80, 240)
+    return 280
+  }, [])
 
   // 初始化 HanziWriter
   useEffect(() => {
@@ -49,35 +59,37 @@ export default function Home() {
         return
       }
 
+      const canvasSize = getCanvasSize()
+
       try {
         writerRef.current = window.HanziWriter.create(containerRef.current, result.char, {
-          width: 280,
-          height: 280,
-          padding: 20,
+          width: canvasSize,
+          height: canvasSize,
+          padding: 15,
           showOutline: true,
           strokeAnimationSpeed: 1,
-          delayBetweenStrokes: 200,
-          strokeColor: "#333333",
-          outlineColor: "#DDDDDD",
-          drawingColor: "#333333",
-          radicalColor: "#333333",
+          delayBetweenStrokes: 250,
+          strokeColor: "#1f2937",
+          outlineColor: "#e5e7eb",
+          drawingColor: "#1f2937",
+          radicalColor: "#1f2937",
           showCharacter: true,
           showHintAfterMisses: false,
           highlightOnComplete: true,
-          highlightCompleteColor: "#4CAF50",
+          highlightCompleteColor: "#22c55e",
         })
 
         // 自动播放动画
         setTimeout(() => {
           playAnimation()
-        }, 500)
+        }, 600)
       } catch (err) {
         console.error("Error creating HanziWriter:", err)
       }
     }
 
     initWriter()
-  }, [result?.char])
+  }, [result?.char, getCanvasSize])
 
   const playAnimation = async () => {
     if (!writerRef.current) return
@@ -116,7 +128,7 @@ export default function Home() {
 
       const utterance = new SpeechSynthesisUtterance(result.audioText)
       utterance.lang = "zh-CN"
-      utterance.rate = 0.8
+      utterance.rate = 0.85
       utterance.pitch = 1
 
       utterance.onstart = () => setIsPlaying(true)
@@ -125,6 +137,7 @@ export default function Home() {
 
       window.speechSynthesis.speak(utterance)
     } else {
+      // 兼容不支持 SpeechSynthesis 的浏览器
       alert("当前浏览器不支持语音播放")
     }
   }
@@ -137,6 +150,8 @@ export default function Home() {
 
     if (!char) {
       setError("请输入一个汉字")
+      // 聚焦输入框
+      inputRef.current?.focus()
       return
     }
 
@@ -152,7 +167,7 @@ export default function Home() {
 
     const detail = getHanziDetail(char)
     if (!detail) {
-      setError("无法获取该汉字的信息，请检查输入是否正确")
+      setError("暂未收录该汉字，请换一个试试")
       return
     }
 
@@ -160,6 +175,8 @@ export default function Home() {
     setTimeout(() => {
       setResult(detail)
       setIsLoading(false)
+      // 隐藏键盘
+      inputRef.current?.blur()
     }, 300)
   }
 
@@ -171,12 +188,10 @@ export default function Home() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    // 输入法输入期间，不做任何限制，让用户正常输入
     if (isComposing) {
       setInputChar(value)
       return
     }
-    // 非输入法期间，只保留第一个字符
     if (value.length > 1) {
       setInputChar(value.charAt(0))
     } else {
@@ -184,7 +199,6 @@ export default function Home() {
     }
   }
 
-  // 处理输入法 composition 事件
   const handleCompositionStart = () => {
     setIsComposing(true)
   }
@@ -192,7 +206,6 @@ export default function Home() {
   const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
     setIsComposing(false)
     const value = e.currentTarget.value
-    // 输入完成后只保留第一个字符
     if (value.length > 1) {
       setInputChar(value.charAt(0))
     }
@@ -202,47 +215,56 @@ export default function Home() {
     setInputChar("")
     setResult(null)
     setError("")
+    // 聚焦输入框
+    setTimeout(() => inputRef.current?.focus(), 100)
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* 顶部标题 */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-6 py-5">
-          <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+      {/* 顶部标题 - 固定在顶部 */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 safe-area-top">
+        <div className="max-w-lg mx-auto px-5 py-4">
+          <h1 className="text-2xl font-bold text-center text-gray-800">
             汉字预习
           </h1>
-          <p className="text-center text-gray-400 text-sm mt-1">看笔顺 · 听读音 · 学组词</p>
+          <p className="text-center text-gray-400 text-xs mt-0.5">看笔顺 · 听读音 · 学组词</p>
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-8">
+      <main className="max-w-lg mx-auto px-4 py-6 pb-12">
         {/* 输入区域 */}
-        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6 border border-gray-100">
-          <div className="flex gap-3">
+        <div className="bg-white rounded-2xl shadow-lg p-4 mb-5 border border-gray-100">
+          <div className="flex gap-2 items-stretch">
             <input
+              ref={inputRef}
               type="text"
+              inputMode="text"
+              enterKeyHint="search"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={inputChar}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
-              placeholder="请输入一个汉字"
-              className="flex-1 px-5 py-4 text-2xl text-center border-2 border-gray-100 rounded-2xl focus:border-blue-400 focus:outline-none transition-all bg-gray-50"
+              placeholder="输入汉字"
+              className="flex-1 px-3 py-3 text-2xl text-center border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none transition-all bg-gray-50 font-medium"
+              style={{ fontSize: '24px', height: '48px', minWidth: '0' }}
               maxLength={1}
             />
             <button
               onClick={handleSearch}
               disabled={isLoading}
-              className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-2xl hover:from-blue-600 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+              className="px-4 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 disabled:bg-gray-300 transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
+              style={{ height: '48px', fontSize: '15px' }}
             >
               {isLoading ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  查询中
                 </span>
               ) : (
                 "开始预习"
@@ -252,10 +274,7 @@ export default function Home() {
 
           {/* 错误提示 */}
           {error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-500 rounded-2xl text-center text-sm flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-xl text-center text-sm">
               {error}
             </div>
           )}
@@ -263,13 +282,13 @@ export default function Home() {
 
         {/* 结果展示区域 */}
         {result && (
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
             {/* 笔顺动画区 */}
-            <div className="bg-gradient-to-br from-gray-50 to-white p-8">
-              <div className="flex justify-center mb-6">
+            <div className="bg-gradient-to-br from-gray-50 to-white p-5">
+              <div className="flex justify-center mb-4">
                 <div
                   ref={containerRef}
-                  className="w-[260px] h-[260px] flex items-center justify-center bg-white rounded-3xl shadow-inner"
+                  className="w-full max-w-[260px] aspect-square flex items-center justify-center bg-white rounded-2xl shadow-inner"
                 />
               </div>
 
@@ -278,27 +297,27 @@ export default function Home() {
                 <button
                   onClick={replayAnimation}
                   disabled={isPlaying}
-                  className="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors flex items-center gap-2"
+                  className="px-5 py-3 bg-blue-50 text-blue-600 rounded-xl text-base font-medium hover:bg-blue-100 transition-colors flex items-center gap-2 active:scale-95"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  重播笔顺
+                  重播
                 </button>
                 <button
                   onClick={pauseAnimation}
-                  className="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
+                  className="px-5 py-3 bg-gray-100 text-gray-600 rounded-xl text-base font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 active:scale-95"
                 >
                   {isPaused ? (
                     <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       </svg>
                       继续
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       暂停
@@ -309,13 +328,13 @@ export default function Home() {
             </div>
 
             {/* 拼音和发音区 */}
-            <div className="px-8 py-6 border-t border-gray-100">
-              <div className="flex items-center justify-center gap-6">
-                <span className="text-5xl font-bold text-gray-800">{result.pinyin}</span>
+            <div className="px-5 py-5 border-t border-gray-100">
+              <div className="flex items-center justify-center gap-5">
+                <span className="text-4xl font-bold text-gray-800">{result.pinyin}</span>
                 <button
                   onClick={playAudio}
                   disabled={isPlaying}
-                  className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25 active:scale-95"
+                  className="p-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg shadow-blue-500/30"
                 >
                   {isPlaying ? (
                     <svg className="w-7 h-7 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,22 +347,17 @@ export default function Home() {
                   )}
                 </button>
               </div>
-              <p className="text-center text-gray-400 text-xs mt-3">点击喇叭听读音</p>
+              <p className="text-center text-gray-400 text-xs mt-2">点击播放读音</p>
             </div>
 
             {/* 词组区 */}
-            <div className="px-8 py-6 border-t border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                常见词组
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="px-5 py-5 border-t border-gray-100">
+              <h3 className="text-base font-semibold text-gray-700 mb-3">常见词组</h3>
+              <div className="grid grid-cols-2 gap-2.5">
                 {result.words.map((word, index) => (
                   <div
                     key={index}
-                    className="px-5 py-3.5 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl text-center text-gray-700 font-medium hover:from-blue-50 hover:to-indigo-50 hover:text-blue-600 transition-all cursor-default border border-gray-100"
+                    className="px-4 py-3 bg-slate-50 rounded-xl text-center text-gray-700 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-default text-base"
                   >
                     {word}
                   </div>
@@ -352,10 +366,10 @@ export default function Home() {
             </div>
 
             {/* 再次查询按钮 */}
-            <div className="px-8 py-6 border-t border-gray-100">
+            <div className="px-5 py-5 border-t border-gray-100">
               <button
                 onClick={handleClear}
-                className="w-full py-4 bg-gray-50 text-gray-500 rounded-2xl font-medium hover:bg-gray-100 hover:text-gray-700 transition-all border border-gray-200"
+                className="w-full py-4 bg-gray-100 text-gray-600 rounded-xl font-semibold hover:bg-gray-200 transition-colors active:scale-95 text-base"
               >
                 查下一个字
               </button>
@@ -366,11 +380,14 @@ export default function Home() {
         {/* 空状态 */}
         {!result && !error && (
           <div className="text-center py-16">
-            <div className="text-8xl mb-6 animate-bounce">📖</div>
-            <p className="text-gray-400 text-lg">输入汉字开始预习</p>
+            <div className="text-7xl mb-4">📖</div>
+            <p className="text-gray-400">输入汉字开始预习</p>
           </div>
         )}
       </main>
+
+      {/* 底部安全区域 */}
+      <div className="h-safe-bottom" />
     </div>
   )
 }
