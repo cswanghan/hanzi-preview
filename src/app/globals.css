@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdf6e3;
+  --foreground: #1a1a1a;
 }
 
 @theme inline {
@@ -13,43 +13,58 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #fdf6e3 0%, #f5f0e6 50%, #e8e0d0 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* 移动端安全区域 */
-.safe-area-top {
-  padding-top: env(safe-area-inset-top, 0);
-}
-
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-/* 输入框在移动端优化 */
+/* 输入框优化 */
 input {
   -webkit-user-select: text;
   user-select: text;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
 /* 词组卡片禁止选中 */
-div[class*="bg-slate-"] {
+div[class*="bg-"] {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
-/* 更大的触摸目标 */
+/* 按钮触摸反馈 */
 button {
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  -webkit-tap-highlight-color: rgba(139, 0, 0, 0.1);
 }
 
-/* 禁用按钮点击效果 */
 button:disabled {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f0e6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 2px;
+}
+
+/* 输入框聚焦样式 */
+input:focus {
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+/* 按钮hover效果 */
+button:not(:disabled):hover {
+  filter: brightness(1.05);
 }

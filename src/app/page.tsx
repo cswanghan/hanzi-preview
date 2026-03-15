@@ -85,7 +85,6 @@ export default function Home() {
       console.error('Failed to save search history', e)
     }
 
-    // 如果没找到，加入未收录列表
     if (!found) {
       const updatedMissing = [...new Set([char, ...missingChars])]
       setMissingChars(updatedMissing)
@@ -106,7 +105,7 @@ export default function Home() {
     localStorage.removeItem(STORAGE_KEYS.MISSING_CHARS)
   }
 
-  // 导出未收录字符（供开发者使用）
+  // 导出未收录字符
   const exportMissingChars = () => {
     const data = {
       missingChars,
@@ -122,7 +121,6 @@ export default function Home() {
     URL.revokeObjectURL(url)
   }
 
-  // 获取屏幕宽度来动态设置画布大小
   const getCanvasSize = useCallback(() => {
     if (typeof window === 'undefined') return 240
     const width = window.innerWidth
@@ -153,14 +151,14 @@ export default function Home() {
           showOutline: true,
           strokeAnimationSpeed: 1,
           delayBetweenStrokes: 250,
-          strokeColor: "#1f2937",
-          outlineColor: "#e5e7eb",
-          drawingColor: "#1f2937",
-          radicalColor: "#1f2937",
+          strokeColor: "#1a1a1a",
+          outlineColor: "#e8e8e8",
+          drawingColor: "#1a1a1a",
+          radicalColor: "#1a1a1a",
           showCharacter: true,
           showHintAfterMisses: false,
           highlightOnComplete: true,
-          highlightCompleteColor: "#22c55e",
+          highlightCompleteColor: "#b8860b",
         })
 
         setTimeout(() => {
@@ -201,17 +199,15 @@ export default function Home() {
     playAnimation()
   }
 
-  // 改进的语音播放 - 选择最好的中文语音
+  // 改进的语音播放
   const playAudio = () => {
     if (!result) return
 
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel()
 
-      // 获取可用语音列表
       let voices = window.speechSynthesis.getVoices()
       
-      // 如果语音列表为空，等待加载
       if (voices.length === 0) {
         window.speechSynthesis.addEventListener('voiceschanged', () => {
           voices = window.speechSynthesis.getVoices()
@@ -227,26 +223,21 @@ export default function Home() {
   const speakWithVoice = (voices: SpeechSynthesisVoice[]) => {
     if (!result) return
 
-    // 优先选择中文女声
     const chineseFemaleVoice = voices.find(v => 
       v.lang.includes('zh-CN') && 
       (v.name.includes('Female') || v.name.includes('女') || v.name.includes('Ting') || v.name.includes('Mei'))
     )
     
-    // 次选任何中文语音
     const chineseVoice = voices.find(v => v.lang.includes('zh-CN'))
-    
-    // 使用找到的最好语音
     const selectedVoice = chineseFemaleVoice || chineseVoice
 
     const utterance = new SpeechSynthesisUtterance(result.audioText)
     utterance.lang = "zh-CN"
-    utterance.rate = 0.8  // 稍慢，更清晰
+    utterance.rate = 0.8
     utterance.pitch = 1.0
     
     if (selectedVoice) {
       utterance.voice = selectedVoice
-      console.log('Using voice:', selectedVoice.name)
     }
 
     utterance.onstart = () => setIsPlaying(true)
@@ -279,8 +270,6 @@ export default function Home() {
     }
 
     const detail = getHanziDetail(char)
-    
-    // 保存搜索记录
     saveSearchHistory(char, !!detail)
 
     if (!detail) {
@@ -340,88 +329,113 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
-      {/* 顶部标题 */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">汉字预习</h1>
-            <p className="text-gray-400 text-xs mt-0.5">看笔顺 · 听读音 · 学组词</p>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fdf6e3 0%, #f5f0e6 50%, #e8e0d0 100%)' }}>
+      {/* 顶部 - 中国风设计 */}
+      <header 
+        className="relative shadow-lg"
+        style={{ 
+          background: 'linear-gradient(135deg, #8B0000 0%, #b91c1c 50%, #8B0000 100%)',
+        }}
+      >
+        {/* 装饰纹理 */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} />
+        
+        <div className="relative max-w-lg mx-auto px-5 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* 印章图标 */}
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#fdf6e3' }}>
+              <span className="text-2xl font-bold" style={{ color: '#8B0000', fontFamily: 'serif' }}>字</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold" style={{ color: '#fdf6e3' }}>汉字预习</h1>
+              <p className="text-xs" style={{ color: 'rgba(253,246,227,0.7)' }}>笔顺 · 读音 · 组词</p>
+            </div>
           </div>
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            style={{ color: '#fdf6e3' }}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
         </div>
+        
+        {/* 底部装饰线 */}
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ 
+          background: 'linear-gradient(90deg, transparent, #d4af37, transparent)',
+          opacity: 0.6
+        }} />
       </header>
 
       {/* 历史记录面板 */}
       {showHistory && (
-        <div className="bg-white border-b border-gray-100 p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-gray-700">搜索历史</h3>
-            <button
-              onClick={clearHistory}
-              className="text-xs text-gray-400 hover:text-red-500"
-            >
-              清除记录
-            </button>
-          </div>
-          
-          {searchHistory.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {searchHistory.slice(0, 20).map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleHistoryClick(item)}
-                  className={`px-3 py-1.5 rounded-lg text-base font-medium transition-colors ${
-                    item.found 
-                      ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
-                      : 'bg-red-50 text-red-500 hover:bg-red-100'
-                  }`}
-                >
-                  {item.char}
-                </button>
-              ))}
+        <div className="max-w-lg mx-auto px-4 pt-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-amber-100">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-semibold text-amber-900">搜索记录</h3>
+              <button
+                onClick={clearHistory}
+                className="text-xs text-amber-600 hover:text-red-600"
+              >
+                清空
+              </button>
             </div>
-          )}
-
-          {missingChars.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-500">
-                  未收录字符 ({missingChars.length})
-                </span>
-                <button
-                  onClick={exportMissingChars}
-                  className="text-xs text-blue-500 hover:text-blue-600"
-                >
-                  导出数据
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {missingChars.map((char, idx) => (
-                  <span
+            
+            {searchHistory.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {searchHistory.slice(0, 20).map((item, idx) => (
+                  <button
                     key={idx}
-                    className="px-2 py-1 bg-red-50 text-red-500 rounded text-sm"
+                    onClick={() => handleHistoryClick(item)}
+                    className={`px-3 py-1.5 rounded-lg text-base font-medium transition-all ${
+                      item.found 
+                        ? 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200' 
+                        : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                    }`}
                   >
-                    {char}
-                  </span>
+                    {item.char}
+                  </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+
+            {missingChars.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-amber-100">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-amber-700">
+                    未收录 ({missingChars.length})
+                  </span>
+                  <button
+                    onClick={exportMissingChars}
+                    className="text-xs text-amber-600 hover:text-amber-800"
+                  >
+                    导出
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {missingChars.map((char, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 bg-red-50 text-red-600 rounded text-sm border border-red-100"
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-12">
-        {/* 输入区域 */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 mb-5 border border-gray-100">
-          <div className="flex gap-2 items-stretch">
+        {/* 输入区域 - 中国风卡片 */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-5 mb-5 border border-amber-100/50" style={{ boxShadow: '0 4px 20px rgba(139,0,0,0.08)' }}>
+          <div className="flex gap-3 items-stretch">
             <input
               ref={inputRef}
               type="text"
@@ -436,15 +450,27 @@ export default function Home() {
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
               placeholder="输入汉字"
-              className="flex-1 px-3 py-3 text-2xl text-center border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none transition-all bg-gray-50 font-medium"
-              style={{ fontSize: '24px', height: '48px', minWidth: '0' }}
+              className="flex-1 px-4 py-3 text-center rounded-xl border-2 transition-all bg-amber-50/50"
+              style={{ 
+                fontSize: '24px', 
+                height: '52px', 
+                minWidth: '0',
+                borderColor: '#d4af37',
+                color: '#1a1a1a',
+              }}
               maxLength={1}
             />
             <button
               onClick={() => handleSearch()}
               disabled={isLoading}
-              className="px-4 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 disabled:bg-gray-300 transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
-              style={{ height: '48px', fontSize: '15px' }}
+              className="px-6 py-3 font-bold rounded-xl transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
+              style={{ 
+                height: '52px', 
+                fontSize: '15px',
+                background: 'linear-gradient(135deg, #8B0000 0%, #b91c1c 100%)',
+                color: '#fdf6e3',
+                boxShadow: '0 4px 12px rgba(139,0,0,0.3)'
+              }}
             >
               {isLoading ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -458,21 +484,22 @@ export default function Home() {
           </div>
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-xl text-center text-sm">
+            <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-center text-sm border border-red-100">
               {error}
             </div>
           )}
         </div>
 
-        {/* 结果展示 */}
+        {/* 结果展示 - 中国风设计 */}
         {result && (
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-amber-100/50" style={{ boxShadow: '0 8px 32px rgba(139,0,0,0.1)' }}>
             {/* 笔顺动画区 */}
-            <div className="bg-gradient-to-br from-gray-50 to-white p-5">
+            <div className="p-6" style={{ background: 'linear-gradient(180deg, #fdf6e3 0%, #fff 100%)' }}>
               <div className="flex justify-center mb-4">
                 <div
                   ref={containerRef}
-                  className="w-full max-w-[260px] aspect-square flex items-center justify-center bg-white rounded-2xl shadow-inner"
+                  className="w-full max-w-[260px] aspect-square flex items-center justify-center rounded-2xl shadow-inner bg-white"
+                  style={{ boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.08)' }}
                 />
               </div>
 
@@ -480,27 +507,37 @@ export default function Home() {
                 <button
                   onClick={replayAnimation}
                   disabled={isPlaying}
-                  className="px-5 py-3 bg-blue-50 text-blue-600 rounded-xl text-base font-medium hover:bg-blue-100 transition-colors flex items-center gap-2 active:scale-95"
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 flex items-center gap-2"
+                  style={{ 
+                    background: '#fdf6e3', 
+                    color: '#8B0000',
+                    border: '1px solid #d4af37'
+                  }}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  重播
+                  重播笔顺
                 </button>
                 <button
                   onClick={pauseAnimation}
-                  className="px-5 py-3 bg-gray-100 text-gray-600 rounded-xl text-base font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 active:scale-95"
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 flex items-center gap-2"
+                  style={{ 
+                    background: '#f5f5f5', 
+                    color: '#666',
+                    border: '1px solid #e0e0e0'
+                  }}
                 >
                   {isPaused ? (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       </svg>
                       继续
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       暂停
@@ -511,13 +548,18 @@ export default function Home() {
             </div>
 
             {/* 拼音和发音 */}
-            <div className="px-5 py-5 border-t border-gray-100">
+            <div className="px-6 py-5 border-t border-amber-100">
               <div className="flex items-center justify-center gap-5">
-                <span className="text-4xl font-bold text-gray-800">{result.pinyin}</span>
+                <span className="text-4xl font-bold text-amber-900" style={{ fontFamily: 'serif' }}>{result.pinyin}</span>
                 <button
                   onClick={playAudio}
                   disabled={isPlaying}
-                  className="p-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg shadow-blue-500/30"
+                  className="p-4 rounded-2xl transition-all active:scale-95 shadow-lg"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #8B0000 0%, #b91c1c 100%)',
+                    color: '#fdf6e3',
+                    boxShadow: '0 4px 12px rgba(139,0,0,0.3)'
+                  }}
                 >
                   {isPlaying ? (
                     <svg className="w-7 h-7 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,17 +572,25 @@ export default function Home() {
                   )}
                 </button>
               </div>
-              <p className="text-center text-gray-400 text-xs mt-2">点击播放读音</p>
+              <p className="text-center text-amber-600 text-xs mt-2">点击播放读音</p>
             </div>
 
             {/* 词组区 */}
-            <div className="px-5 py-5 border-t border-gray-100">
-              <h3 className="text-base font-semibold text-gray-700 mb-3">常见词组</h3>
+            <div className="px-6 py-5 border-t border-amber-100" style={{ background: 'linear-gradient(180deg, #fdf6e3 0%, #fff 100%)' }}>
+              <h3 className="text-base font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full" style={{ background: 'linear-gradient(180deg, #8B0000, #d4af37)' }} />
+                常见词组
+              </h3>
               <div className="grid grid-cols-2 gap-2.5">
                 {result.words.map((word, index) => (
                   <div
                     key={index}
-                    className="px-4 py-3 bg-slate-50 rounded-xl text-center text-gray-700 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-default text-base"
+                    className="px-4 py-3 rounded-xl text-center text-amber-900 font-medium transition-all cursor-default text-base"
+                    style={{ 
+                      background: '#fff',
+                      border: '1px solid #e8dcc8',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}
                   >
                     {word}
                   </div>
@@ -549,10 +599,15 @@ export default function Home() {
             </div>
 
             {/* 再次查询 */}
-            <div className="px-5 py-5 border-t border-gray-100">
+            <div className="px-6 py-5 border-t border-amber-100">
               <button
                 onClick={handleClear}
-                className="w-full py-4 bg-gray-100 text-gray-600 rounded-xl font-semibold hover:bg-gray-200 transition-colors active:scale-95 text-base"
+                className="w-full py-4 rounded-xl font-semibold transition-colors active:scale-95 text-base"
+                style={{ 
+                  background: '#f5f5f5', 
+                  color: '#666',
+                  border: '1px solid #e0e0e0'
+                }}
               >
                 查下一个字
               </button>
@@ -563,11 +618,17 @@ export default function Home() {
         {/* 空状态 */}
         {!result && !error && (
           <div className="text-center py-16">
-            <div className="text-7xl mb-4">📖</div>
-            <p className="text-gray-400">输入汉字开始预习</p>
+            <div className="text-8xl mb-6" style={{ filter: 'grayscale(20%)' }}>📖</div>
+            <p className="text-amber-700 text-lg">输入汉字开始预习</p>
           </div>
         )}
       </main>
+
+      {/* 底部装饰 */}
+      <div className="fixed bottom-0 left-0 right-0 h-2" style={{ 
+        background: 'linear-gradient(90deg, #8B0000, #d4af37, #8B0000)',
+        opacity: 0.3
+      }} />
     </div>
   )
 }
