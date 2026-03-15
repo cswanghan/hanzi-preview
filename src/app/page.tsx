@@ -201,23 +201,59 @@ export default function Home() {
     playAnimation()
   }
 
+  // 改进的语音播放 - 选择最好的中文语音
   const playAudio = () => {
     if (!result) return
 
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel()
 
-      const utterance = new SpeechSynthesisUtterance(result.audioText)
-      utterance.lang = "zh-CN"
-      utterance.rate = 0.85
-      utterance.pitch = 1
+      // 获取可用语音列表
+      let voices = window.speechSynthesis.getVoices()
+      
+      // 如果语音列表为空，等待加载
+      if (voices.length === 0) {
+        window.speechSynthesis.addEventListener('voiceschanged', () => {
+          voices = window.speechSynthesis.getVoices()
+          speakWithVoice(voices)
+        }, { once: true })
+        return
+      }
 
-      utterance.onstart = () => setIsPlaying(true)
-      utterance.onend = () => setIsPlaying(false)
-      utterance.onerror = () => setIsPlaying(false)
-
-      window.speechSynthesis.speak(utterance)
+      speakWithVoice(voices)
     }
+  }
+
+  const speakWithVoice = (voices: SpeechSynthesisVoice[]) => {
+    if (!result) return
+
+    // 优先选择中文女声
+    const chineseFemaleVoice = voices.find(v => 
+      v.lang.includes('zh-CN') && 
+      (v.name.includes('Female') || v.name.includes('女') || v.name.includes('Ting') || v.name.includes('Mei'))
+    )
+    
+    // 次选任何中文语音
+    const chineseVoice = voices.find(v => v.lang.includes('zh-CN'))
+    
+    // 使用找到的最好语音
+    const selectedVoice = chineseFemaleVoice || chineseVoice
+
+    const utterance = new SpeechSynthesisUtterance(result.audioText)
+    utterance.lang = "zh-CN"
+    utterance.rate = 0.8  // 稍慢，更清晰
+    utterance.pitch = 1.0
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice
+      console.log('Using voice:', selectedVoice.name)
+    }
+
+    utterance.onstart = () => setIsPlaying(true)
+    utterance.onend = () => setIsPlaying(false)
+    utterance.onerror = () => setIsPlaying(false)
+
+    window.speechSynthesis.speak(utterance)
   }
 
   const handleSearch = (charFromHistory?: string) => {
